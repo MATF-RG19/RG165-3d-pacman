@@ -1,3 +1,4 @@
+#include "level.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -6,14 +7,15 @@
 #include <GL/glut.h>
 #include <stdbool.h>
 
-#define PI 3.14159265358979323846	
-#define wallcolor 0.282, 0.820, 0.800
-#define wallsize 2
 #define playercolor 1.000, 0.549, 0.000
-#define playersize 5
-#define maxright 98.0
-#define maxup 98.0
+#define playersize 3
+#define maxright square*13
+#define maxup square*16
 
+bool keystates[256];        //koje dugme je pritisnuto
+int map[15][18]={0};   //niz koji cuva kakvo je dato polje (solid,coin,supercoin)
+static void mapa(void);  //funkcija koja pravi mapu
+int brojac=0;
 
 /* Funkcija initalize() vrsi OpenGL inicijalizaciju. */
 static void initialize(void);
@@ -27,7 +29,6 @@ static void timer(int time);
 
 //Draw funkcije
 static void draw_level(void);	//pocetno iscrtavanje nivoa
-static void draw_walls(void); 	//iscrtavanje zidova
 static void draw_player(void);	//iscrtavanje pacmana
 
 //struktura za playera
@@ -38,23 +39,25 @@ float velocity;		//trenutna brzina kretanja
 int lifes;		//broj zivota
 int imune;		//imunitet za debuging 
 int eat;		//pacman jede duhove
-char direction;}Pacman;	//strana u koju se pacman krece	
+char dir;       //strana u koju se pacman krece
+float size;     //velicina
+}Pacman;		
 
 Pacman player;		//globalna promenljiva u kojoj se cuvaju podaci o igracu
 
 
+
 static void new_game(void){
 	//Player inicijalizacija
-	player.x=50.0;
-	player.y=50.0;
-	player.velocity=33.0/60;
+	player.x=4*square;
+	player.y=4*square;
+	player.velocity=18/60.0;
 	player.lifes=3;
 	player.imune=0;
 	player.eat=0;
-	
+    player.dir='n';
+	player.size=1.5;
 }
-
-bool keystates[256];
 
 
 static void moveUp(void);	//deklaracija funckija kretanja
@@ -62,8 +65,48 @@ static void moveLeft(void);
 static void moveDown(void);
 static void moveRight(void);
 
+
+
+int collision (float x, float y){
+    if(player.dir=='n') return 0;
+    float next;
+    int tile_x=x/square;
+    int tile_y=y/square;
+    switch(player.dir){
+        case 'u':
+            next=(player.y+player.velocity+player.size)/square;
+            tile_y=next;
+            return map[tile_x][tile_y];
+            break;
+            
+        case 'd':
+            next=(player.y-player.velocity-player.size)/square;
+            tile_y=next;
+            if(next<0)return 0;
+            return map[tile_x][tile_y];
+            break;
+            
+        case 'l':
+            next=(player.x-player.velocity-player.size)/square;
+            tile_x=next;
+            //printf("tile:%d \t next:%f",tile_x,player.x-player.velocity-player.size);
+            return map[tile_x][tile_y];
+            break;
+            
+        case 'r':
+            next=(player.x+player.velocity+player.size)/square;
+            tile_x=next;
+            //printf("\n MAP:%d x:%d y:%d",map[tile_x][tile_y],tile_x,tile_y);
+            return map[tile_x][tile_y];
+            break;
+    }
+    return 1;
+    
+}
+
 int main(int argc, char **argv)
 {
+    mapa();
     /* Inicijalizuje se GLUT. */
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE |GLUT_DEPTH);
@@ -72,7 +115,8 @@ int main(int argc, char **argv)
     glutInitWindowSize(1280, 720);
     glutInitWindowPosition((1920-1280)/2, (1080-720)/2);
     glutCreateWindow("Pacman");
-
+    
+    
     /* Registruju se callback funkcije. */
     new_game();
     glutKeyboardFunc(on_keyboard);		//key down
@@ -93,8 +137,9 @@ static void on_display(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//clear last frame
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity(); //reset coordinate system
-	gluLookAt(50,-30,72,50,50,0,0,1,0);	
-	
+	//gluLookAt(50,-30,72,50,50,0,0,1,0);	//normal camera
+    gluLookAt(50,50,100,50,50,0,0,1,0); //top camera
+	//gluLookAt(0,17*square,100, 0,17*square,0 ,0,1,0);
 	//draw
 	draw_level();
    	glutSwapBuffers();	
@@ -129,100 +174,109 @@ static void on_reshape(int width, int height){
 }
 
 static void timer(int time){
-	glutPostRedisplay();
+	glutPostRedisplay();	
 	glutTimerFunc(1000/60,timer,0);  //60 fps per second
-	if (keystates['i'] || keystates['I']) moveUp();
-	if (keystates['k'] || keystates['K']) moveDown();
-	if (keystates['j'] || keystates['J']) moveLeft();
-	if (keystates['l'] || keystates['L']) moveRight();
+    
+	if (keystates['i'] || keystates['I']) player.dir='u';
+    if (keystates['k'] || keystates['K']) player.dir='d';
+	if (keystates['j'] || keystates['J']) player.dir='l';
+	if (keystates['l'] || keystates['L']) player.dir='r';
 	if (keystates[27]) exit(0);
+    if (keystates['q'] || keystates['Q']) gluLookAt(0,17*square,100, 0,17*square,0 ,0,0,1);
+    
+    switch(player.dir){
+            case 'r':
+                moveRight();
+                break;
+            
+            case 'l':
+                moveLeft();
+                break;
+            
+            case 'u':
+                moveUp();
+                break;
+                
+            case 'd':
+                moveDown();
+                break;
+            
+            default:
+                break;
+        }
+                
+    
+    
+
 }
 
 static void draw_level(void){
 	
 	draw_walls();
-	
 	draw_player();
-	
-	
-
+    draw_coins();
 }
 
 static void draw_player(void){
 glPushMatrix();
 	glColor3f(playercolor);
-	glTranslatef(player.x,player.y,2.5);
-	glutSolidSphere(5,10,10);
+	glTranslatef(player.x,player.y,player.size);
+	glutSolidSphere(player.size,10,10);
 glPopMatrix();
 }
 
-static void draw_walls(void){
-	//draw ground
-	glPushMatrix();
-		glBegin(GL_QUADS);
-		glColor3f(1.0,1.0,0.0);
-		glVertex3f(100,100,0);
-		glVertex3f(0,100,0);
-		glVertex3f(0,0,0);
-		glVertex3f(100,0,0);		
-		glEnd();
-	glPopMatrix();
-
-	//draw boundries
-	glPushMatrix();
-		glColor3f(wallcolor);
-		glTranslatef(0,51,0);
-		glScalef(1,50,10);
-		glutSolidCube(wallsize);
-	glPopMatrix();
-
-	glPushMatrix();
-		glTranslatef(50,0,0);
-		glRotatef(90,0,0,1);
-		glScalef(1,51,10);
-		glutSolidCube(wallsize);
-	glPopMatrix();
-
-	glPushMatrix();
-		glTranslatef(50,100,0);
-		glRotatef(90,0,0,1);
-		glScalef(1,51,10);
-		glutSolidCube(wallsize);
-	glPopMatrix();
-
-	glPushMatrix();
-		glTranslatef(100,51,0);
-		glScalef(1,50,10);
-		glutSolidCube(wallsize);
-	glPopMatrix();
-}
 
 static void moveRight(void){
 
-	printf("Moving right position :%.2f,%.2f by :%f \n",player.x,player.y,player.velocity);
-	if(player.x<(maxright-playersize)) player.x+=player.velocity;
-	player.direction=' ';
+	printf("Moving right position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
+	if(collision(player.x,player.y)) player.x+=player.velocity;
+	
 }
 
 static void moveLeft(void){
 
 	
-	printf("Moving left position :%.2f,%.2f by :%f \n",player.x,player.y,player.velocity);
-	if(player.x>playersize) player.x-=player.velocity;
-	player.direction=' ';
+	printf("Moving left position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
+	if(collision(player.x,player.y)) player.x-=player.velocity;
+	
 }
 
 static void moveUp(void){
 
-	printf("Moving up position :%.2f,%.2f by :%f \n",player.x,player.y,player.velocity);
-	if(player.y<(maxup-playersize)) player.y+=player.velocity;
-	player.direction=' ';
+	printf("Moving up position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
+	if(collision(player.x,player.y)) player.y+=player.velocity;
+	
 }
 
 static void moveDown(void){
 
-	printf("Moving down position :%.2f,%.2f by :%f \n",player.x,player.y,player.velocity);
-	if(player.y>playersize) player.y-=player.velocity;
-	player.direction=' ';
+	printf("Moving down position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
+	if(collision(player.x,player.y)) player.y-=player.velocity;
+	
+}
+
+static void mapa(void){
+    
+    int i=0;
+    int j=0;
+    for(i=0;i<=14;i++){
+        for(j=0;j<=17;j++)map[i][j]=1;
+    }
+    
+    
+    
+    for(j=0;j<=17;j++){
+        map[0][j]=0;
+    }
+    
+    for(j=0;j<=17;j++){
+        map[14][j]=0;
+    }
+    
+    
+    for(i=0;i<=14;i++){
+        map[i][17]=0;
+    }
+    
 }
 
