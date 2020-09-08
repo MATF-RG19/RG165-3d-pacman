@@ -11,9 +11,30 @@
 #define playersize 3
 #define maxright square*13
 #define maxup square*16
+ 
 
 bool keystates[256];        //koje dugme je pritisnuto
-int map[15][18]={0};   //niz koji cuva kakvo je dato polje (solid,coin,supercoin)
+int map[15][18]={
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,3,2,2,2,2,0,2,2,3,2,2,0,2,2,2,2,3},
+    {0,2,0,0,0,2,0,2,0,2,0,2,0,2,0,0,0,2},
+    {0,2,0,2,2,2,0,2,0,2,0,2,0,2,2,2,0,2},
+    {0,2,0,2,0,2,2,2,0,2,0,2,2,2,0,2,0,2},
+    {0,3,2,2,0,2,0,0,0,2,0,0,0,2,0,2,2,3},
+    {0,0,0,2,0,1,1,1,1,3,1,1,1,1,0,2,0,0},
+    {0,2,2,2,0,1,0,3,0,0,0,3,0,1,0,2,2,2},
+    {0,0,0,2,0,1,1,1,1,3,1,1,1,1,0,2,0,0},
+    {0,3,2,2,0,2,0,0,0,2,0,0,0,2,0,2,2,3},
+    {0,2,0,2,0,2,2,2,0,2,0,2,2,2,0,2,0,2},
+    {0,2,0,2,2,2,0,2,0,2,0,2,0,2,2,2,0,2},
+    {0,2,0,0,0,2,0,2,0,2,0,2,0,2,0,0,0,2},
+    {0,3,2,2,2,2,0,2,2,3,2,2,0,2,2,2,2,3},
+    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    
+};   //niz koji cuva kakvo je dato polje (solid,coin,supercoin)
+
+
+
 static void mapa(void);  //funkcija koja pravi mapu
 int brojac=0;
 
@@ -30,6 +51,7 @@ static void timer(int time);
 //Draw funkcije
 static void draw_level(void);	//pocetno iscrtavanje nivoa
 static void draw_player(void);	//iscrtavanje pacmana
+static void draw_obstacles(void);   //iscrtaj prepreke
 
 //struktura za playera
 typedef struct Pacman{
@@ -106,7 +128,7 @@ int collision (float x, float y){
 
 int main(int argc, char **argv)
 {
-    mapa();
+    //mapa();
     /* Inicijalizuje se GLUT. */
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE |GLUT_DEPTH);
@@ -125,7 +147,7 @@ int main(int argc, char **argv)
 	glutReshapeFunc(on_reshape);
 	glutTimerFunc(0,timer,0);
 	initialize();
-
+    
     /* Program ulazi u glavnu petlju. */
     glutMainLoop();
 
@@ -140,7 +162,7 @@ static void on_display(void)
 	//gluLookAt(50,-30,72,50,50,0,0,1,0);	//normal camera
     gluLookAt(50,50,100,50,50,0,0,1,0); //top camera
 	//gluLookAt(0,17*square,100, 0,17*square,0 ,0,1,0);
-	//draw
+
 	draw_level();
    	glutSwapBuffers();	
 }
@@ -214,7 +236,7 @@ static void draw_level(void){
 	
 	draw_walls();
 	draw_player();
-    draw_coins();
+    draw_obstacles();
 }
 
 static void draw_player(void){
@@ -264,7 +286,6 @@ static void mapa(void){
     }
     
     
-    
     for(j=0;j<=17;j++){
         map[0][j]=0;
     }
@@ -278,5 +299,25 @@ static void mapa(void){
         map[i][17]=0;
     }
     
+    
 }
 
+static void draw_obstacles(void){
+    int i=0;
+    int j=0;
+    for(i=0;i<=14;i++){
+        for(j=0;j<=18;j++){
+            if(map[i][j]==0){
+                glPushMatrix();
+                    glColor3f(wallcolor);
+                    glTranslatef(square*i+square/2,square*j+square/2,square/2);
+                    glScalef(square,square,square);
+                    glutSolidCube(1);
+                glPopMatrix();
+            }
+            
+            else if(map[i][j]==2)draw_coins(i,j);
+            else if(map[i][j]==3)draw_supercoins(i,j);
+        }
+    }
+}

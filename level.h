@@ -9,9 +9,11 @@
 #define wallcolor 0.282, 0.820, 0.800
 #define wallsize 2
 #define square 4
+#define coincolor 1.0, 0.843, 0.0
 
 void draw_walls(void); //iscrtava zidove
-void draw_coins(void); //iscrtava coine
+void draw_coins(int i, int j); //iscrtava coine
+void draw_supercoins(int i, int j); //supercoin
 
 
 #endif

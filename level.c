@@ -5,10 +5,10 @@ void draw_walls(void){
 	//draw ground
 	glPushMatrix();
 		glBegin(GL_POLYGON);
-		glColor3f(1.0,1.0,0.0);
+		glColor3f(1.0,1.0,1.0);
 		glVertex3f(1*square,0,0);
-        glVertex3f(1*square,17*square,0);
-        glVertex3f(14*square,17*square,0);
+        glVertex3f(1*square,18*square,0);
+        glVertex3f(14*square,18*square,0);
         glVertex3f(14*square,0,0);
 		glEnd();
 	glPopMatrix();
@@ -19,21 +19,22 @@ void draw_walls(void){
     //vertikalne
 	glPushMatrix();
 		glColor3f(wallcolor);
-		glTranslatef(square/2,17.0/2*square,square/2);
+		glTranslatef(square/2,17.0/2*square+square,square/2);
 		glScalef(square,17*square,square);
 		glutSolidCube(1);
 	glPopMatrix();
     
     glPushMatrix();
 		glColor3f(wallcolor);
-		glTranslatef(14*square+square/2,17.0/2*square,square/2);
+		glTranslatef(14*square+square/2,17.0/2*square+square,square/2);
 		glScalef(square,17*square,square);
 		glutSolidCube(1);
 	glPopMatrix();
     
     //horizontalne
+    
     glPushMatrix();
-		glTranslatef(15.0/2*square,-square/2,square/2);
+		glTranslatef(15.0/2*square,square/2,square/2);
 		glRotatef(90,0,0,1);
 		glScalef(square,15*square,square);
 		glutSolidCube(1);
@@ -41,7 +42,7 @@ void draw_walls(void){
     
     
     glPushMatrix();
-		glTranslatef(15.0/2*square,17*square+square/2,square/2);
+		glTranslatef(15.0/2*square,18*square+square/2,square/2);
 		glRotatef(90,0,0,1);
 		glScalef(square,15*square,square);
 		glutSolidCube(1);
@@ -50,8 +51,34 @@ void draw_walls(void){
     
 }
 
-void draw_coins(void){
-    
+void draw_coins(int i, int j){
+                    glPushMatrix();
+                    glColor3f(coincolor);
+                    glTranslatef(square*i+square/2,square*j+square/2,1);
+                    glutSolidCone(1, 1 ,30, 30);
+                glPopMatrix();
+                
+                glPushMatrix();
+                    glColor3f(coincolor);
+                    glTranslatef(square*i+square/2,square*j+square/2,1);
+                    glRotatef(180,0,1,0);
+                    glutSolidCone(1, 1 ,30, 30);;
+                glPopMatrix();
+}
+
+void draw_supercoins(int i, int j){
+                    glPushMatrix();
+                    glColor3f(1.0,0.2,0.2);
+                    glTranslatef(square*i+square/2,square*j+square/2,1);
+                    glutSolidCone(1, 1 ,30, 30);
+                glPopMatrix();
+                
+                glPushMatrix();
+                    glColor3f(1.0,0.2,0.2);
+                    glTranslatef(square*i+square/2,square*j+square/2,1);
+                    glRotatef(180,0,1,0);
+                    glutSolidCone(1, 1 ,30, 30);;
+                glPopMatrix();
 }
 
 
