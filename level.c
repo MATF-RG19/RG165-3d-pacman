@@ -21,14 +21,14 @@ void draw_walls(void){
 		glColor3f(wallcolor);
 		glTranslatef(square/2,17.0/2*square,square/2);
 		glScalef(square,17*square,square);
-		glutWireCube(1);
+		glutSolidCube(1);
 	glPopMatrix();
     
     glPushMatrix();
 		glColor3f(wallcolor);
 		glTranslatef(14*square+square/2,17.0/2*square,square/2);
 		glScalef(square,17*square,square);
-		glutWireCube(1);
+		glutSolidCube(1);
 	glPopMatrix();
     
     //horizontalne
@@ -36,7 +36,7 @@ void draw_walls(void){
 		glTranslatef(15.0/2*square,-square/2,square/2);
 		glRotatef(90,0,0,1);
 		glScalef(square,15*square,square);
-		glutWireCube(1);
+		glutSolidCube(1);
 	glPopMatrix();
     
     
@@ -44,7 +44,7 @@ void draw_walls(void){
 		glTranslatef(15.0/2*square,17*square+square/2,square/2);
 		glRotatef(90,0,0,1);
 		glScalef(square,15*square,square);
-		glutWireCube(1);
+		glutSolidCube(1);
 	glPopMatrix();
     
     
