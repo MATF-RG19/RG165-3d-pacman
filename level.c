@@ -1,7 +1,7 @@
 #include "level.h"
 #include <GL/glut.h>
 
-void draw_walls(void){
+void draw_ground(void){
 	//draw ground
 	glPushMatrix();
 		glBegin(GL_POLYGON);
@@ -17,6 +17,7 @@ void draw_walls(void){
     //draw boundries
     
     //vertikalne
+    /*
 	glPushMatrix();
 		glColor3f(wallcolor);
 		glTranslatef(square/2,17.0/2*square+square,square/2);
@@ -47,7 +48,7 @@ void draw_walls(void){
 		glScalef(square,15*square,square);
 		glutSolidCube(1);
 	glPopMatrix();
-    
+    */
     
 }
 
@@ -81,4 +82,20 @@ void draw_supercoins(int i, int j){
                 glPopMatrix();
 }
 
+void draw_block(int i, int j){
+                glPushMatrix();
+                    glColor3f(wallcolor);
+                    glTranslatef(square*i+square/2,square*j+square/2,square/2);
+                    glScalef(square,square,square);
+                    glutSolidCube(1);
+                glPopMatrix();
+}
 
+void draw_teleport(int i, int j){
+                glPushMatrix();
+                    glColor3f(0.3,0.3,0.3);
+                    glTranslatef(square*i+square/2,square*j+square/2,square/2);
+                    glScalef(square,square,square);
+                    glutSolidCube(1);
+                glPopMatrix();
+}

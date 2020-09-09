@@ -15,7 +15,7 @@
 
 bool keystates[256];        //koje dugme je pritisnuto
 int map[15][18]={
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0},
     {0,3,2,2,2,2,0,2,2,3,2,2,0,2,2,2,2,3},
     {0,2,0,0,0,2,0,2,0,2,0,2,0,2,0,0,0,2},
     {0,2,0,2,2,2,0,2,0,2,0,2,0,2,2,2,0,2},
@@ -29,10 +29,28 @@ int map[15][18]={
     {0,2,0,2,2,2,0,2,0,2,0,2,0,2,2,2,0,2},
     {0,2,0,0,0,2,0,2,0,2,0,2,0,2,0,0,0,2},
     {0,3,2,2,2,2,0,2,2,3,2,2,0,2,2,2,2,3},
-    {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0},
     
-};   //niz koji cuva kakvo je dato polje (solid,coin,supercoin)
+};   //niz koji cuva kakvo je dato polje (solid=0,normal=1,coin=2,supercoin=3,teleport=4)
 
+int kopija[15][18]={
+    {0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0},
+    {0,3,2,2,2,2,0,2,2,3,2,2,0,2,2,2,2,3},
+    {0,2,0,0,0,2,0,2,0,2,0,2,0,2,0,0,0,2},
+    {0,2,0,2,2,2,0,2,0,2,0,2,0,2,2,2,0,2},
+    {0,2,0,2,0,2,2,2,0,2,0,2,2,2,0,2,0,2},
+    {0,3,2,2,0,2,0,0,0,2,0,0,0,2,0,2,2,3},
+    {0,0,0,2,0,1,1,1,1,3,1,1,1,1,0,2,0,0},
+    {0,2,2,2,0,1,0,3,0,0,0,3,0,1,0,2,2,2},
+    {0,0,0,2,0,1,1,1,1,3,1,1,1,1,0,2,0,0},
+    {0,3,2,2,0,2,0,0,0,2,0,0,0,2,0,2,2,3},
+    {0,2,0,2,0,2,2,2,0,2,0,2,2,2,0,2,0,2},
+    {0,2,0,2,2,2,0,2,0,2,0,2,0,2,2,2,0,2},
+    {0,2,0,0,0,2,0,2,0,2,0,2,0,2,0,0,0,2},
+    {0,3,2,2,2,2,0,2,2,3,2,2,0,2,2,2,2,3},
+    {0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0},
+    
+}; 
 
 
 static void mapa(void);  //funkcija koja pravi mapu
@@ -63,6 +81,7 @@ int imune;		//imunitet za debuging
 int eat;		//pacman jede duhove
 char dir;       //strana u koju se pacman krece
 float size;     //velicina
+int remaining;  //broj coina koji je ostao kako bi se pobedilo u igri
 }Pacman;		
 
 Pacman player;		//globalna promenljiva u kojoj se cuvaju podaci o igracu
@@ -70,15 +89,33 @@ Pacman player;		//globalna promenljiva u kojoj se cuvaju podaci o igracu
 
 
 static void new_game(void){
+    
+    int i,j;
+    player.remaining=0;
 	//Player inicijalizacija
-	player.x=4*square;
-	player.y=4*square;
+	player.x=7.5*square;
+	player.y=5.5*square;
 	player.velocity=18/60.0;
 	player.lifes=3;
 	player.imune=0;
 	player.eat=0;
     player.dir='n';
 	player.size=1.5;
+    
+    //prebroj novcice u mapi
+        for(i=0;i<=14;i++){
+        for(j=0;j<=18;j++){
+            if((map[i][j]== 2) || (map[i][j]== 3))player.remaining++;
+        }
+    }
+    
+    //resetuj mapu
+    
+    for(i=0;i<=14;i++){
+        for(j=0;j<=18;j++){
+            map[i][j]=kopija[i][j];
+        }
+    }
 }
 
 
@@ -87,6 +124,8 @@ static void moveLeft(void);
 static void moveDown(void);
 static void moveRight(void);
 
+void after_collision(int x, int y, int typeOfCollision); 
+//funkcija koja preduzima akciju nakon kolizije u zavisnosti od tipa kolizije
 
 
 int collision (float x, float y){
@@ -98,6 +137,7 @@ int collision (float x, float y){
         case 'u':
             next=(player.y+player.velocity+player.size)/square;
             tile_y=next;
+            after_collision(tile_x, tile_y, map[tile_x][tile_y]);
             return map[tile_x][tile_y];
             break;
             
@@ -105,6 +145,7 @@ int collision (float x, float y){
             next=(player.y-player.velocity-player.size)/square;
             tile_y=next;
             if(next<0)return 0;
+            after_collision(tile_x, tile_y, map[tile_x][tile_y]);
             return map[tile_x][tile_y];
             break;
             
@@ -112,6 +153,7 @@ int collision (float x, float y){
             next=(player.x-player.velocity-player.size)/square;
             tile_x=next;
             //printf("tile:%d \t next:%f",tile_x,player.x-player.velocity-player.size);
+            after_collision(tile_x, tile_y, map[tile_x][tile_y]);
             return map[tile_x][tile_y];
             break;
             
@@ -119,6 +161,7 @@ int collision (float x, float y){
             next=(player.x+player.velocity+player.size)/square;
             tile_x=next;
             //printf("\n MAP:%d x:%d y:%d",map[tile_x][tile_y],tile_x,tile_y);
+            after_collision(tile_x, tile_y, map[tile_x][tile_y]);
             return map[tile_x][tile_y];
             break;
     }
@@ -126,9 +169,10 @@ int collision (float x, float y){
     
 }
 
+
 int main(int argc, char **argv)
 {
-    //mapa();
+
     /* Inicijalizuje se GLUT. */
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE |GLUT_DEPTH);
@@ -141,6 +185,9 @@ int main(int argc, char **argv)
     
     /* Registruju se callback funkcije. */
     new_game();
+    
+    printf("\n REMAINING: %d \n",player.remaining);
+    
     glutKeyboardFunc(on_keyboard);		//key down
     glutKeyboardUpFunc(on_keyboardup);		//key up
     glutDisplayFunc(on_display);
@@ -204,7 +251,7 @@ static void timer(int time){
 	if (keystates['j'] || keystates['J']) player.dir='l';
 	if (keystates['l'] || keystates['L']) player.dir='r';
 	if (keystates[27]) exit(0);
-    if (keystates['q'] || keystates['Q']) gluLookAt(0,17*square,100, 0,17*square,0 ,0,0,1);
+    if (keystates['n'] || keystates['N']) new_game();
     
     switch(player.dir){
             case 'r':
@@ -234,7 +281,7 @@ static void timer(int time){
 
 static void draw_level(void){
 	
-	draw_walls();
+	draw_ground();
 	draw_player();
     draw_obstacles();
 }
@@ -249,31 +296,32 @@ glPopMatrix();
 
 
 static void moveRight(void){
-
+    int vrednost;
 	printf("Moving right position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
-	if(collision(player.x,player.y)) player.x+=player.velocity;
+	if((vrednost=collision(player.x,player.y))) player.x+=player.velocity;
 	
 }
 
 static void moveLeft(void){
 
-	
+	int vrednost;
 	printf("Moving left position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
-	if(collision(player.x,player.y)) player.x-=player.velocity;
+	if((vrednost=collision(player.x,player.y))) player.x-=player.velocity;
 	
 }
 
 static void moveUp(void){
-
+    
+    int vrednost;
 	printf("Moving up position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
-	if(collision(player.x,player.y)) player.y+=player.velocity;
+	if((vrednost=collision(player.x,player.y))) player.y+=player.velocity;
 	
 }
 
 static void moveDown(void){
-
+    int vrednost;
 	printf("Moving down position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
-	if(collision(player.x,player.y)) player.y-=player.velocity;
+	if((vrednost=collision(player.x,player.y))) player.y-=player.velocity;
 	
 }
 
@@ -307,17 +355,32 @@ static void draw_obstacles(void){
     int j=0;
     for(i=0;i<=14;i++){
         for(j=0;j<=18;j++){
-            if(map[i][j]==0){
-                glPushMatrix();
-                    glColor3f(wallcolor);
-                    glTranslatef(square*i+square/2,square*j+square/2,square/2);
-                    glScalef(square,square,square);
-                    glutSolidCube(1);
-                glPopMatrix();
-            }
-            
+            if(map[i][j]==0)draw_block(i,j);
             else if(map[i][j]==2)draw_coins(i,j);
             else if(map[i][j]==3)draw_supercoins(i,j);
+            else if(map[i][j]==4)draw_teleport(i,j);
         }
     }
 }
+
+void after_collision(int x, int y, int typeOfCollision){
+    
+    switch(typeOfCollision){
+        case 2:
+            map[x][y]=1;
+            player.remaining--;
+            break;
+        
+        case 3:
+            map[x][y]=1;
+            player.remaining--;
+            //imunity();
+            break;
+            
+        case 4:
+            if(x==0) player.x=14*square;
+            if(x==14) player.x=square/2;
+            break;
+    }
+}
+
