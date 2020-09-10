@@ -21,10 +21,10 @@ char remains[20];
 char numLives[10];
 char pauseMsg1[30]="THE GAME IS PAUSED";
 char pauseMsg2[30]="PRESS 'P' TO PLAY";
-int won=0; int follow=1;
+int won=0; int follow=0; int lost=0;
 double topX=7.5*square,topY=9.5*square,topZ=18*square,top1=7.5*square, top2=9.5*square, top3=0;
 double positionX,positionY,positionZ,tarX,tarY,tarZ;
-
+float jump_animation=0.0;
 
 bool keystates[256];        //koje dugme je pritisnuto
 int map[15][18]={
@@ -65,7 +65,7 @@ int kopija[15][18]={
 
 };
 
-int brojac=0;
+int brojac=5;
 int paused=0;
 int pausable=60;    //ne moze se pauzirati prvu sekundu
 static void pause(void);
@@ -89,6 +89,7 @@ static void draw_obstacles(void);   //iscrtaj prepreke
 typedef struct Pacman{
 float x;		//pozicija po x koordinati
 float y;		//pozicija po y koordinati
+float z;        //pozicija po z koordinati
 float velocity;		//trenutna brzina kretanja
 int lives;		//broj zivota
 float immune;		//imunitet za debuging
@@ -134,8 +135,10 @@ static void new_game(void){
 	player.eat=0;
     player.dir='n';
 	player.size=1.5;
+	player.z=player.size;
 	paused=1;
 	won=0;
+	lost=0;
 
     //prebroj novcice u mapi
         for(i=0;i<=14;i++){
@@ -163,6 +166,7 @@ static void new_game(void){
 
 static void game_over(void); //funkcija koja se poziva ako nemas vise zivota
 static void win(void);
+static void player_jump(void);
 
 static void moveUp(void);	//deklaracija funkcija kretanja
 static void moveLeft(void);
@@ -181,8 +185,7 @@ static void setTopCamera(void);     //funkcija za setovanje kamere odozgo (2d pr
 
 int main(int argc, char **argv)
 {
-    player.x=7.5*square;
-    player.y=5.5*square;
+
     new_game();
     /* Inicijalizuje se GLUT. */
     glutInit(&argc, argv);
@@ -223,12 +226,34 @@ static void on_display(void)
 
 	sprintf(remains,"Coins remaining: %d",player.remaining);
 	sprintf(numLives,"Lives: %d",player.lives);
-    drawBitmapText(remains,-8*square,1*square+1,0);
-    drawBitmapText(numLives,-8*square,1*square-1,0);
+    drawBitmapText(remains,17*square,1*square+1,0);
+    drawBitmapText(numLives,17*square,1*square-1,0);
 
     if(paused==1 && won!=1){
-    drawBigText(pauseMsg1,17*square,12*square,0);
-    drawBigText(pauseMsg2,17*square,12*square-4,0);}
+    if(lost!=1){
+    drawBigTextY(pauseMsg1,17*square,12*square,0);
+    drawBigTextY(pauseMsg2,17*square,12*square-4,0);
+    }
+    drawBigText("Pacman moves by pressing",17*square,8*square,0);
+    drawBigText("'I' - Up",19*square,7*square,0);
+    drawBigText("'J'- Left     'K'- Down     'L'- Right",15.5*square,6*square,0);
+    drawBigText("You can restart the game",17*square,15*square,0);
+    drawBigText("By pressing 'N'",17*square,14*square,0);
+    drawBigText("Camera controls: ",-10*square,12*square,0);
+    drawBigText("Top down(2d)- 'R' ",-10*square,11*square,0);
+    drawBigText("Follow player(3d)- 'V' ",-10*square,10*square,0);
+
+    }
+    if(paused==1 && won>=1){
+        player_jump();
+        drawBigTextY("Congratulations, you win",17*square,12*square,0);
+        drawBigTextY("Press 'N' to restart the game",17*square,12*square-4,0);
+    }
+
+    if(paused==1 && lost==1){
+        drawBigTextY("Bad luck, you lost",17*square,12*square,0);
+        drawBigTextY("Press 'N' to restart the game",17*square,12*square-4,0);
+    }
 
 	draw_level();
    	glutSwapBuffers();
@@ -354,7 +379,7 @@ glPushMatrix();
 	if(player.eat>0) glColor3f(eatcolor);
         else glColor3f(playercolor);
     if(player.immune>0) glColor3f(1.0,0.1,0.1);
-	glTranslatef(player.x,player.y,player.size);
+	glTranslatef(player.x,player.y,player.z);
 	glutSolidSphere(player.size,10,10);
 glPopMatrix();
 }
@@ -493,12 +518,14 @@ static void eat_a_coin(void){
 }
 
 static void game_over(void){
-
+    pause();
+    lost=1;
 }
 
 static void win(void){
-    paused=1;
+    pause();
     won=1;
+    jump_animation=4;
 }
 
 
@@ -625,8 +652,9 @@ float distance (float x1, float y1, float x2, float y2){
 
 static void pause(void){
     if(pausable<=0){
-        if(paused==1){paused=0; pausable=30;}
-        else {paused=1; pausable=30;}
+        if(paused==1){paused=0; pausable=30;follow=1;
+        }
+        else {paused=1; pausable=30; follow=0;}
     }
 }
 
@@ -638,3 +666,14 @@ static void setTopCamera(void){
     tarY=top2;
     tarZ=top3;
 }
+
+static void player_jump(void){
+    if(jump_animation>=0){
+        player.x=19*square;
+        player.y=9*square;
+        player.size=2.5;
+        if(jump_animation>3.0 || (jump_animation<2.0 && jump_animation>1.0)){player.z+=0.1;jump_animation-=1.0/60;}
+        else{player.z-=0.1;jump_animation-=1.0/60;}
+        }
+    else jump_animation=4;
+    }

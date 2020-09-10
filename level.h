@@ -18,5 +18,6 @@ void draw_block(int i, int j);    //iscrtava prepreku
 void draw_teleport(int i, int j);   //iscrtava teleporter
 void drawBitmapText(char *string,float x,float y,float z); //ispisuje tekst
 void drawBigText(char *string,float x,float y,float z);
+void drawBigTextY(char *string,float x,float y,float z);
 
 #endif
