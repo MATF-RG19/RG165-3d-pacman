@@ -1,6 +1,8 @@
 #include "level.h"
 #include <GL/glut.h>
 
+
+
 void draw_ground(void){
 	//draw ground
 	glPushMatrix();
@@ -15,9 +17,9 @@ void draw_ground(void){
 
 
     //draw boundries
-
+/*
     //vertikalne
-    /*
+
 	glPushMatrix();
 		glColor3f(wallcolor);
 		glTranslatef(square/2,17.0/2*square+square,square/2);
@@ -35,20 +37,22 @@ void draw_ground(void){
     //horizontalne
 
     glPushMatrix();
+        glColor3f(wallcolor);
 		glTranslatef(15.0/2*square,square/2,square/2);
 		glRotatef(90,0,0,1);
 		glScalef(square,15*square,square);
 		glutSolidCube(1);
 	glPopMatrix();
-
+*/
 
     glPushMatrix();
-		glTranslatef(15.0/2*square,18*square+square/2,square/2);
+        glColor3f(wallcolor);
+		glTranslatef(15.0/2*square,18*square+square/2,square/4);
 		glRotatef(90,0,0,1);
-		glScalef(square,15*square,square);
+		glScalef(square,15*square,square/2);
 		glutSolidCube(1);
 	glPopMatrix();
-    */
+
 
 }
 
@@ -71,22 +75,22 @@ void draw_supercoins(int i, int j){
                     glPushMatrix();
                     glColor3f(1.0,0.2,0.2);
                     glTranslatef(square*i+square/2,square*j+square/2,1);
-                    glutSolidCone(1, 1 ,30, 30);
+                    glutSolidCone(1, 1 ,10, 10);
                 glPopMatrix();
 
                 glPushMatrix();
                     glColor3f(1.0,0.2,0.2);
                     glTranslatef(square*i+square/2,square*j+square/2,1);
                     glRotatef(180,0,1,0);
-                    glutSolidCone(1, 1 ,30, 30);;
+                    glutSolidCone(1, 1 ,10, 10);;
                 glPopMatrix();
 }
 
 void draw_block(int i, int j){
                 glPushMatrix();
                     glColor3f(wallcolor);
-                    glTranslatef(square*i+square/2,square*j+square/2,square/2);
-                    glScalef(square,square,square);
+                    glTranslatef(square*i+square/2,square*j+square/2,square/4);
+                    glScalef(square,square,square/2);
                     glutSolidCube(1);
                 glPopMatrix();
 }
@@ -94,8 +98,8 @@ void draw_block(int i, int j){
 void draw_teleport(int i, int j){
                 glPushMatrix();
                     glColor3f(0.3,0.3,0.3);
-                    glTranslatef(square*i+square/2,square*j+square/2,square/2);
-                    glScalef(square,square,square);
+                    glTranslatef(square*i+square/2,square*j+square/2,square/4);
+                    glScalef(square,square,square/2);
                     glutSolidCube(1);
                 glPopMatrix();
 }
@@ -108,7 +112,20 @@ glPushMatrix();
     glRasterPos3f(x, y,z);
     for (c=string; *c != '\0'; c++)
         {
-        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, *c);
+        }
+glPopMatrix();
+}
+
+void drawBigText(char *string,float x,float y,float z)
+{
+    char *c;
+glPushMatrix();
+    glColor3f(wallcolor);
+    glRasterPos3f(x, y,z);
+    for (c=string; *c != '\0'; c++)
+        {
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);;
         }
 glPopMatrix();
 }

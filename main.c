@@ -15,9 +15,16 @@
 #define gh3 0.000, 0.933, 0.463
 #define maxright square*13
 #define maxup square*16
+#define norm 0,1,0
 
 char remains[20];
 char numLives[10];
+char pauseMsg1[30]="THE GAME IS PAUSED";
+char pauseMsg2[30]="PRESS 'P' TO PLAY";
+int won=0; int follow=1;
+double topX=7.5*square,topY=9.5*square,topZ=18*square,top1=7.5*square, top2=9.5*square, top3=0;
+double positionX,positionY,positionZ,tarX,tarY,tarZ;
+
 
 bool keystates[256];        //koje dugme je pritisnuto
 int map[15][18]={
@@ -121,12 +128,14 @@ static void new_game(void){
 	//Player inicijalizacija
 	player.x=7.5*square;
 	player.y=5.5*square;
-	player.velocity=18/60.0;
+	player.velocity=0.25;
 	player.lives=3;
 	player.immune=0;
 	player.eat=0;
     player.dir='n';
 	player.size=1.5;
+	paused=1;
+	won=0;
 
     //prebroj novcice u mapi
         for(i=0;i<=14;i++){
@@ -168,13 +177,18 @@ static void immunity(int t); //funkcija koja pokazuje da pacman moze da jede duh
 static void eat_a_coin(void);   //funkcija koja se poziva kada pojede novcic
 
 float distance (float x1, float y1, float x2, float y2);    //funkcija razdaljine dve tacke
+static void setTopCamera(void);     //funkcija za setovanje kamere odozgo (2d prikaz)
 
 int main(int argc, char **argv)
 {
-
+    player.x=7.5*square;
+    player.y=5.5*square;
+    new_game();
     /* Inicijalizuje se GLUT. */
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE |GLUT_DEPTH);
+
+    setTopCamera();
 
     /* Kreira se prozor. */
     glutInitWindowSize(1280, 720);
@@ -183,7 +197,6 @@ int main(int argc, char **argv)
 
 
     /* Registruju se callback funkcije. */
-    new_game();
     printf("\n REMAINING: %d \n",player.remaining);
     //printf("Ghost1: %.2f %.2f ",ghost1.x,ghost1.y);
 
@@ -205,13 +218,18 @@ static void on_display(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//clear last frame
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity(); //reset coordinate system
-	gluLookAt(10.5*square,10.5*square,72,10.5*square,10.5*square,0,0,1,0);	//normal camera
-    //gluLookAt(50,50,100,50,50,0,0,1,0); //top camera
-	//gluLookAt(0,17*square,100, 0,17*square,0 ,0,1,0);
-	sprintf(remains,"Remains: %d",player.remaining);
+	if(follow!=1)gluLookAt(positionX,positionY,positionZ,tarX,tarY,tarZ,norm);
+	if(follow==1) gluLookAt(player.x,player.y-3*square,4.5*square,player.x,player.y,0, norm);
+
+	sprintf(remains,"Coins remaining: %d",player.remaining);
 	sprintf(numLives,"Lives: %d",player.lives);
-    drawBitmapText(remains,20,80,0);
-    drawBitmapText(numLives,20,82,0);
+    drawBitmapText(remains,-8*square,1*square+1,0);
+    drawBitmapText(numLives,-8*square,1*square-1,0);
+
+    if(paused==1 && won!=1){
+    drawBigText(pauseMsg1,17*square,12*square,0);
+    drawBigText(pauseMsg2,17*square,12*square-4,0);}
+
 	draw_level();
    	glutSwapBuffers();
 }
@@ -259,6 +277,25 @@ static void timer(int time){
     if (keystates['n'] || keystates['N']) new_game();
     if (keystates['x'] || keystates['X']) player.immune=5.0;
     if (keystates['p'] || keystates['P']) pause();
+
+    //camera controls
+    if (keystates['w'] || keystates['W']) positionY+=0.1;
+    if (keystates['a'] || keystates['A']) positionX-=0.1;
+    if (keystates['s'] || keystates['S']) positionY-=0.1;
+    if (keystates['d'] || keystates['D']) positionX+=0.1;
+
+    if (keystates['f'] || keystates['F']) tarX-=0.1;
+    if (keystates['g'] || keystates['G']) tarY-=0.1;
+    if (keystates['h'] || keystates['H']) tarX+=0.1;
+    if (keystates['t'] || keystates['T']) tarY+=0.1;
+
+    if (keystates['4']) positionZ-=0.1;
+    if (keystates['5']) positionZ+=0.1;
+
+    if (keystates['r'] || keystates['R']){setTopCamera();follow=0;}
+    if (keystates['v'] || keystates['V'])follow=1;
+
+    if(keystates['m'])printf("\n%f %f %f, %f %f %f\n",positionX,positionY,positionZ,tarX,tarY,tarZ);
 
     if(paused==0){
     //provera da li pacman moze da jede duhove
@@ -340,31 +377,31 @@ glPopMatrix();
 
 static void moveRight(void){
     int vrednost;
-	printf("Moving right position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
-	if((vrednost=collision(player.x,player.y))) player.x+=player.velocity;
+	//printf("Moving right position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
+	if((vrednost=collision(player.x,player.y))) if((int)((player.y+player.size*0.8)/square) == (int)((player.y-player.size*0.8)/square))player.x+=player.velocity;
 
 }
 
 static void moveLeft(void){
 
 	int vrednost;
-	printf("Moving left position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
-	if((vrednost=collision(player.x,player.y))) player.x-=player.velocity;
+	//printf("Moving left position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
+	if((vrednost=collision(player.x,player.y))) if((int)((player.y+player.size*0.8)/square) == (int)((player.y-player.size*0.8)/square))player.x-=player.velocity;
 
 }
 
 static void moveUp(void){
 
     int vrednost;
-	printf("Moving up position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
-	if((vrednost=collision(player.x,player.y))) player.y+=player.velocity;
+	//printf("Moving up position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
+	if((vrednost=collision(player.x,player.y))) if((int)((player.x+player.size*0.8)/square) == (int)((player.x-player.size*0.8)/square))player.y+=player.velocity;
 
 }
 
 static void moveDown(void){
     int vrednost;
-	printf("Moving down position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
-	if((vrednost=collision(player.x,player.y))) player.y-=player.velocity;
+	//printf("Moving down position :%.2f,%.2f by :%f \n",player.x, player.y, player.velocity);
+	if((vrednost=collision(player.x,player.y))) if((int)((player.x+player.size*0.8)/square) == (int)((player.x-player.size*0.8)/square))player.y-=player.velocity;
 
 }
 
@@ -430,6 +467,7 @@ static void after_collision(int x, int y, int typeOfCollision){
         case 2:
             map[x][y]=1;
             player.remaining--;
+            eat_a_coin();
             if(player.remaining==0)win();
             break;
 
@@ -439,8 +477,8 @@ static void after_collision(int x, int y, int typeOfCollision){
             break;
 
         case 4:
-            if(x==0) player.x=14*square+square/2;
-            if(x==14) player.x=square/2;
+            if(x==0) player.x=14*square+square/3;
+            if(x==14) player.x=square/1.5;
             break;
     }
 }
@@ -459,7 +497,8 @@ static void game_over(void){
 }
 
 static void win(void){
-
+    paused=1;
+    won=1;
 }
 
 
@@ -589,4 +628,13 @@ static void pause(void){
         if(paused==1){paused=0; pausable=30;}
         else {paused=1; pausable=30;}
     }
+}
+
+static void setTopCamera(void){
+    positionX=topX;
+    positionY=topY;
+    positionZ=topZ;
+    tarX=top1;
+    tarY=top2;
+    tarZ=top3;
 }
