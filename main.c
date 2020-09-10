@@ -16,6 +16,8 @@
 #define maxright square*13
 #define maxup square*16
 
+char remains[20];
+char numLives[10];
 
 bool keystates[256];        //koje dugme je pritisnuto
 int map[15][18]={
@@ -57,6 +59,9 @@ int kopija[15][18]={
 };
 
 int brojac=0;
+int paused=0;
+int pausable=60;    //ne moze se pauzirati prvu sekundu
+static void pause(void);
 
 /* Funkcija initalize() vrsi OpenGL inicijalizaciju. */
 static void initialize(void);
@@ -164,7 +169,6 @@ static void eat_a_coin(void);   //funkcija koja se poziva kada pojede novcic
 
 float distance (float x1, float y1, float x2, float y2);    //funkcija razdaljine dve tacke
 
-
 int main(int argc, char **argv)
 {
 
@@ -201,10 +205,13 @@ static void on_display(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//clear last frame
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity(); //reset coordinate system
-	//gluLookAt(50,-30,72,50,50,0,0,1,0);	//normal camera
-    gluLookAt(50,50,100,50,50,0,0,1,0); //top camera
+	gluLookAt(10.5*square,10.5*square,72,10.5*square,10.5*square,0,0,1,0);	//normal camera
+    //gluLookAt(50,50,100,50,50,0,0,1,0); //top camera
 	//gluLookAt(0,17*square,100, 0,17*square,0 ,0,1,0);
-
+	sprintf(remains,"Remains: %d",player.remaining);
+	sprintf(numLives,"Lives: %d",player.lives);
+    drawBitmapText(remains,20,80,0);
+    drawBitmapText(numLives,20,82,0);
 	draw_level();
    	glutSwapBuffers();
 }
@@ -241,6 +248,19 @@ static void timer(int time){
 	glutPostRedisplay();
 	glutTimerFunc(1000/60,timer,0);  //60 fps per second
 
+    if(pausable>0)pausable--;
+
+	//keypresses
+	if (keystates['i'] || keystates['I']) player.dir='u';
+    if (keystates['k'] || keystates['K']) player.dir='d';
+	if (keystates['j'] || keystates['J']) player.dir='l';
+	if (keystates['l'] || keystates['L']) player.dir='r';
+	if (keystates[27]) exit(0);
+    if (keystates['n'] || keystates['N']) new_game();
+    if (keystates['x'] || keystates['X']) player.immune=5.0;
+    if (keystates['p'] || keystates['P']) pause();
+
+    if(paused==0){
     //provera da li pacman moze da jede duhove
     if(player.eat>0) player.eat-=1.0/60;
 
@@ -255,17 +275,6 @@ static void timer(int time){
     move(&ghost1);
     move(&ghost2);
     move(&ghost3);
-
-
-
-    //keypresses
-	if (keystates['i'] || keystates['I']) player.dir='u';
-    if (keystates['k'] || keystates['K']) player.dir='d';
-	if (keystates['j'] || keystates['J']) player.dir='l';
-	if (keystates['l'] || keystates['L']) player.dir='r';
-	if (keystates[27]) exit(0);
-    if (keystates['n'] || keystates['N']) new_game();
-    if (keystates['x'] || keystates['X']) player.immune=5.0;
 
     switch(player.dir){
             case 'r':
@@ -289,7 +298,7 @@ static void timer(int time){
         }
 
 
-
+    }
 
 }
 
@@ -471,6 +480,7 @@ static void move(Ghost *ghost){
             if(player.eat>0) initializeGhost(ghost);
             else{
                 player.lives-=1;
+                player.immune=1.0;
                 if(player.lives==0) game_over();
                 else {
                     player.x=7.5*square;
@@ -527,7 +537,7 @@ static void initializeGhost(Ghost *ghost){
 
 
 static void find_move(Ghost *ghost){
-    printf("\n findmove called ghost%d \n",ghost->id);
+    //printf("\n findmove called ghost%d \n",ghost->id);
     srand(time(0));
     int possibility[4]={0,0,0,0}; //0-left 1-right 2-up 3-down
 
@@ -572,4 +582,11 @@ float distance (float x1, float y1, float x2, float y2){
     b=(y1- y2) * (y1 - y2);
 
     return sqrt(a*a + b*b);
+}
+
+static void pause(void){
+    if(pausable<=0){
+        if(paused==1){paused=0; pausable=30;}
+        else {paused=1; pausable=30;}
+    }
 }
