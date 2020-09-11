@@ -65,7 +65,7 @@ int kopija[15][18]={
 
 };
 
-int brojac=5;
+int brojac=0;
 int paused=0;
 int pausable=60;    //ne moze se pauzirati prvu sekundu
 static void pause(void);
@@ -79,6 +79,9 @@ static void on_keyboardup(unsigned char key, int x, int y);
 static void on_reshape(int width, int height);
 static void on_display(void);
 static void timer(int time);
+
+static void panToPlayer(void);
+static void panToTop(void);
 
 //Draw funkcije
 static void draw_level(void);	//pocetno iscrtavanje nivoa
@@ -139,6 +142,7 @@ static void new_game(void){
 	paused=1;
 	won=0;
 	lost=0;
+	brojac=0;
 
     //prebroj novcice u mapi
         for(i=0;i<=14;i++){
@@ -221,9 +225,10 @@ static void on_display(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//clear last frame
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity(); //reset coordinate system
-	if(follow!=1)gluLookAt(positionX,positionY,positionZ,tarX,tarY,tarZ,norm);
-	if(follow==1) gluLookAt(player.x,player.y-3*square,4.5*square,player.x,player.y,0, norm);
-
+	if(follow!=1 && brojac<=0){setTopCamera(); gluLookAt(positionX,positionY,positionZ,tarX,tarY,tarZ,norm);}
+	if(follow==1 && brojac<=0) gluLookAt(player.x,player.y-3*square,4.5*square,player.x,player.y,0, norm);
+	if(follow==1 && brojac>0) {panToPlayer(); gluLookAt(positionX,positionY,positionZ,tarX,tarY,tarZ,norm);}
+    if(follow!=1 && brojac>0)  {panToTop(); gluLookAt(positionX,positionY,positionZ,tarX,tarY,tarZ,norm);}
 	sprintf(remains,"Coins remaining: %d",player.remaining);
 	sprintf(numLives,"Lives: %d",player.lives);
     drawBitmapText(remains,17*square,1*square+1,0);
@@ -322,7 +327,7 @@ static void timer(int time){
 
     if(keystates['m'])printf("\n%f %f %f, %f %f %f\n",positionX,positionY,positionZ,tarX,tarY,tarZ);
 
-    if(paused==0){
+    if(paused==0 && brojac<=0){
     //provera da li pacman moze da jede duhove
     if(player.eat>0) player.eat-=1.0/60;
 
@@ -652,9 +657,9 @@ float distance (float x1, float y1, float x2, float y2){
 
 static void pause(void){
     if(pausable<=0){
-        if(paused==1){paused=0; pausable=30;follow=1;
+        if(paused==1){paused=0; pausable=30;follow=1;brojac=120;
         }
-        else {paused=1; pausable=30; follow=0;}
+        else {paused=1; pausable=30; follow=0;brojac=120;}
     }
 }
 
@@ -677,3 +682,28 @@ static void player_jump(void){
         }
     else jump_animation=4;
     }
+
+static void panToPlayer(void){
+    //iz top u player
+    //player koordinate kamere: player.x, player.y-3*square,4.5*square,
+    //player lookAt             player.x, player.y         ,0
+    positionX-=(topX-player.x)/120;
+    positionY-=(topY-player.y+3*square)/120;
+    positionZ-=(topZ-4.5*square)/120;
+    tarX-=(top1-player.x)/120;
+    tarY-=(top2-player.y)/120;
+    tarZ-=top3/120;
+    brojac--;
+}
+
+static void panToTop(void){
+    //iz player u top
+    if(brojac==120){positionX=player.x; positionY=player.y-3*square; positionZ=4.5*square; tarX=player.x; tarY=player.y; tarZ=0;}
+    positionX+=(topX-player.x)/120;
+    positionY+=(topY-player.y+3*square)/120;
+    positionZ+=(topZ-4.5*square)/120;
+    tarX+=(top1-player.x)/120;
+    tarY+=(top2-player.y)/120;
+    tarZ+=top3/120;
+    brojac--;
+}
