@@ -123,7 +123,7 @@ static void draw_ghost(Ghost *ghost);   //iscrtavanje duha
 static void initializeGhost(Ghost *ghost);   //inicijalizacija duha
 static void find_move(Ghost *ghost);        //odabir sledeceg polja za kretanje duha
 static void choose_new_target(Ghost *ghost);    //izaberi random polje u kvadrantu pacmana
-
+static void setTopCamera(void);     //funkcija za setovanje kamere odozgo (2d prikaz)
 
 static void new_game(void){
 
@@ -143,7 +143,7 @@ static void new_game(void){
 	won=0;
 	lost=0;
 	brojac=0;
-
+    follow=0;
     //prebroj novcice u mapi
         for(i=0;i<=14;i++){
         for(j=0;j<=18;j++){
@@ -166,6 +166,9 @@ static void new_game(void){
     initializeGhost(&ghost1);
     initializeGhost(&ghost2);
     initializeGhost(&ghost3);
+
+    //reset kameru na top
+    setTopCamera();
 }
 
 static void game_over(void); //funkcija koja se poziva ako nemas vise zivota
@@ -185,7 +188,7 @@ static void immunity(int t); //funkcija koja pokazuje da pacman moze da jede duh
 static void eat_a_coin(void);   //funkcija koja se poziva kada pojede novcic
 
 float distance (float x1, float y1, float x2, float y2);    //funkcija razdaljine dve tacke
-static void setTopCamera(void);     //funkcija za setovanje kamere odozgo (2d prikaz)
+
 
 int main(int argc, char **argv)
 {
@@ -250,9 +253,10 @@ static void on_display(void)
 
     }
     if(paused==1 && won>=1){
-        player_jump();
+
         drawBigTextY("Congratulations, you win",17*square,12*square,0);
         drawBigTextY("Press 'N' to restart the game",17*square,12*square-4,0);
+        if(brojac<=0)player_jump();
     }
 
     if(paused==1 && lost==1){
@@ -306,24 +310,13 @@ static void timer(int time){
 	if (keystates[27]) exit(0);
     if (keystates['n'] || keystates['N']) new_game();
     if (keystates['x'] || keystates['X']) player.immune=5.0;
-    if (keystates['p'] || keystates['P']) pause();
+    if (keystates['p'] || keystates['P']) {pause(); if(won==1 || lost==1)new_game();}
 
     //camera controls
-    if (keystates['w'] || keystates['W']) positionY+=0.1;
-    if (keystates['a'] || keystates['A']) positionX-=0.1;
-    if (keystates['s'] || keystates['S']) positionY-=0.1;
-    if (keystates['d'] || keystates['D']) positionX+=0.1;
+    if (keystates['w'] || keystates['W']) win();
+    if (keystates['a'] || keystates['A']) game_over();
+    if (keystates['c'] || keystates['C']) player.remaining=1;
 
-    if (keystates['f'] || keystates['F']) tarX-=0.1;
-    if (keystates['g'] || keystates['G']) tarY-=0.1;
-    if (keystates['h'] || keystates['H']) tarX+=0.1;
-    if (keystates['t'] || keystates['T']) tarY+=0.1;
-
-    if (keystates['4']) positionZ-=0.1;
-    if (keystates['5']) positionZ+=0.1;
-
-    if (keystates['r'] || keystates['R']){setTopCamera();follow=0;}
-    if (keystates['v'] || keystates['V'])follow=1;
 
     if(keystates['m'])printf("\n%f %f %f, %f %f %f\n",positionX,positionY,positionZ,tarX,tarY,tarZ);
 
@@ -523,14 +516,19 @@ static void eat_a_coin(void){
 }
 
 static void game_over(void){
-    pause();
+    positionX=player.x; positionY=player.y-3*square; positionZ=4.5*square; tarX=player.x; tarY=player.y; tarZ=0;
+    follow=0;
     lost=1;
+    pause();
 }
 
 static void win(void){
-    pause();
+    positionX=player.x; positionY=player.y-3*square; positionZ=4.5*square; tarX=player.x; tarY=player.y; tarZ=0;
+    follow=0;
     won=1;
+    pause();
     jump_animation=4;
+
 }
 
 
