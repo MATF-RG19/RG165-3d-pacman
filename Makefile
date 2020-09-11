@@ -4,12 +4,15 @@ CFLAGS  = -g -Wall -I/usr/X11R6/include -I/usr/pkg/include
 LDFLAGS = -L/usr/X11R6/lib -L/usr/pkg/lib
 LDLIBS  = -lglut -lGLU -lGL -lm
 
-$(PROGRAM): main.o level.o
-	$(CC) $(LDFLAGS) -o $(PROGRAM) main.o level.o $(LDLIBS)
+$(PROGRAM): main.o level.o image.o
+	$(CC) $(LDFLAGS) -o $(PROGRAM) main.o level.o image.o $(LDLIBS)
 
-level.o : level.c level.h
-	gcc -o $@ $< -c $(LDLIBS)
+level.o : level.c 
+	$(CC) -o $@ $< -c $(LDLIBS)
 
+image.o: image.c 
+	$(CC) -c image.c
+	
 .PHONY: clean dist
 
 clean:

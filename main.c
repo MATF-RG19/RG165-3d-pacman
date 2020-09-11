@@ -6,6 +6,7 @@
 #include <time.h>
 #include <GL/glut.h>
 #include <stdbool.h>
+#include "image.h"
 
 #define eatcolor 0.333,0.112,1.000
 #define playercolor 1.000, 0.549, 0.000
@@ -17,11 +18,15 @@
 #define maxup square*16
 #define norm 0,1,0
 
+#define FILENAME0 "snow.bmp"
+#define FILENAME1 "fiberglass.bmp"
+#define FILENAME2 "ghost1.bmp"
+
 char remains[20];
 char numLives[10];
 char pauseMsg1[30]="THE GAME IS PAUSED";
 char pauseMsg2[30]="PRESS 'P' TO PLAY";
-int won=0; int follow=0; int lost=0;
+int won=0; int follow=0; int lost=0; float param=1.0; int indikator_param=1;
 double topX=7.5*square,topY=9.5*square,topZ=18*square,top1=7.5*square, top2=9.5*square, top3=0;
 double positionX,positionY,positionZ,tarX,tarY,tarZ;
 float jump_animation=0.0;
@@ -87,6 +92,7 @@ static void panToTop(void);
 static void draw_level(void);	//pocetno iscrtavanje nivoa
 static void draw_player(void);	//iscrtavanje pacmana
 static void draw_obstacles(void);   //iscrtaj prepreke
+static void draw_block(int i, int j);//iscrtaj blok
 
 //struktura za playera
 typedef struct Pacman{
@@ -122,7 +128,6 @@ static void move(Ghost *ghost);//funkcija kretanja duha
 static void draw_ghost(Ghost *ghost);   //iscrtavanje duha
 static void initializeGhost(Ghost *ghost);   //inicijalizacija duha
 static void find_move(Ghost *ghost);        //odabir sledeceg polja za kretanje duha
-static void choose_new_target(Ghost *ghost);    //izaberi random polje u kvadrantu pacmana
 static void setTopCamera(void);     //funkcija za setovanje kamere odozgo (2d prikaz)
 
 static void new_game(void){
@@ -144,6 +149,8 @@ static void new_game(void){
 	lost=0;
 	brojac=0;
     follow=0;
+    param=1.0;
+    indikator_param=1;
     //prebroj novcice u mapi
         for(i=0;i<=14;i++){
         for(j=0;j<=18;j++){
@@ -189,6 +196,8 @@ static void eat_a_coin(void);   //funkcija koja se poziva kada pojede novcic
 
 float distance (float x1, float y1, float x2, float y2);    //funkcija razdaljine dve tacke
 
+//parametri za teksture
+static GLuint names[10];
 
 int main(int argc, char **argv)
 {
@@ -225,6 +234,28 @@ int main(int argc, char **argv)
 
 static void on_display(void)
 {
+      /*boja pozadine*/
+    glClearColor(0.5, 0.5,0.5,0);
+
+    /* Pozicija svetla. */
+    GLfloat light_position[] = {1, 1, 1, 0};
+
+    /* Ambijentalna boja svetla. */
+    GLfloat light_ambient[] = { 0.2, 0.2, 0.2, 1 };
+
+    /* Difuzna boja svetla. */
+    GLfloat light_diffuse[] = { 1, 1, 1, 1 };
+
+    /* Spekularna boja svetla. */
+    GLfloat light_specular[] = {  1, 1, 1, 1 };
+
+    /* Koeficijenti spekularne refleksije materijala. */
+    GLfloat specular_coeffs[] = { 1, 1, 1, 1 };
+
+    /* Koeficijent glatkosti materijala. */
+    GLfloat shininess = 15;
+
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//clear last frame
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity(); //reset coordinate system
@@ -247,10 +278,6 @@ static void on_display(void)
     drawBigText("'J'- Left     'K'- Down     'L'- Right",15.5*square,6*square,0);
     drawBigText("You can restart the game",17*square,15*square,0);
     drawBigText("By pressing 'N'",17*square,14*square,0);
-    drawBigText("Camera controls: ",-10*square,12*square,0);
-    drawBigText("Top down(2d)- 'R' ",-10*square,11*square,0);
-    drawBigText("Follow player(3d)- 'V' ",-10*square,10*square,0);
-
     }
     if(paused==1 && won>=1){
 
@@ -263,6 +290,24 @@ static void on_display(void)
         drawBigTextY("Bad luck, you lost",17*square,12*square,0);
         drawBigTextY("Press 'N' to restart the game",17*square,12*square-4,0);
     }
+
+
+        /* Ukljucuje se osvjetljenje i podesavaju parametri svetla. */
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+
+    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+
+    /* Podesavaju se parametri materijala. */
+    glEnable ( GL_COLOR_MATERIAL ) ;
+    glColorMaterial ( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE );
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular_coeffs);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+
+
 
 	draw_level();
    	glutSwapBuffers();
@@ -280,6 +325,70 @@ static void on_keyboardup(unsigned char key, int x, int y)
 static void initialize(void){
 	glClearColor(0.0,0.0,0,1.0);
 	glEnable(GL_DEPTH_TEST);
+
+	/* Deklaracija teskture učitane iz fajla. */
+    Image * image;
+
+    /* Uključuju se teksture. */
+    glEnable(GL_TEXTURE_2D);
+    glTexEnvf(GL_TEXTURE_ENV,
+              GL_TEXTURE_ENV_MODE,
+              GL_REPLACE);
+
+    /* Inicijalizuje se promenljiva image koji ce sadrzati teksture ucitane iz fajlova. */
+    image = image_init(0, 0);
+
+    /* Kreira se prva tekstura. */
+    /* Generisu se identifikatori tekstura. */
+    glGenTextures(2, names);
+
+    image_read(image, FILENAME0);
+
+    glBindTexture(GL_TEXTURE_2D, names[0]);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+                 image->width, image->height, 0,
+                 GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
+
+    image_read(image, FILENAME1);
+
+    glBindTexture(GL_TEXTURE_2D, names[1]);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+                 image->width, image->height, 0,
+                 GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
+
+        image_read(image, FILENAME2);
+
+    glBindTexture(GL_TEXTURE_2D, names[2]);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,
+                    GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+                 image->width, image->height, 0,
+                 GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
+
+
+
+
+    /* Iskljucujemo aktivnu teksturu */
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    /* Unistava se objekat za citanje tekstura iz fajla. */
+    image_done(image);
 }
 
 static void on_reshape(int width, int height){
@@ -319,7 +428,11 @@ static void timer(int time){
 
 
     if(keystates['m'])printf("\n%f %f %f, %f %f %f\n",positionX,positionY,positionZ,tarX,tarY,tarZ);
-
+    if(paused==0){
+        if(param>2.2)indikator_param=-1;
+        if(param<1.0)indikator_param=1;
+            param+=indikator_param*0.005;
+    }
     if(paused==0 && brojac<=0){
     //provera da li pacman moze da jede duhove
     if(player.eat>0) player.eat-=1.0/60;
@@ -364,7 +477,47 @@ static void timer(int time){
 
 static void draw_level(void){
 
-	draw_ground();
+	//draw_ground();
+
+    	//draw ground
+	glPushMatrix();
+
+                        glBindTexture(GL_TEXTURE_2D, names[0]);
+                        glEnable(GL_TEXTURE_2D);
+                        glEnable(GL_TEXTURE_GEN_S); //enable texture coordinate generation
+                        glEnable(GL_TEXTURE_GEN_T);
+
+		glBegin(GL_POLYGON);
+		glColor3f(1.0,1.0,1.0);
+		glVertex3f(1*square,0,0);
+        glVertex3f(1*square,18*square,0);
+        glVertex3f(14*square,18*square,0);
+        glVertex3f(14*square,0,0);
+		glEnd();
+
+                    glDisable(GL_TEXTURE_2D);
+                    glDisable(GL_TEXTURE_GEN_S); //enable texture coordinate generation
+                    glDisable(GL_TEXTURE_GEN_T);
+	glPopMatrix();
+
+
+    glPushMatrix();
+
+
+                        glBindTexture(GL_TEXTURE_2D, names[1]);
+                        glEnable(GL_TEXTURE_2D);
+                        glEnable(GL_TEXTURE_GEN_S); //enable texture coordinate generation
+                        glEnable(GL_TEXTURE_GEN_T);
+        glColor3f(wallcolor);
+		glTranslatef(15.0/2*square,18*square+square/2,square/4);
+		glRotatef(90,0,0,1);
+		glScalef(square,15*square,square/2);
+		glutSolidCube(1);
+                    glDisable(GL_TEXTURE_2D);
+                    glDisable(GL_TEXTURE_GEN_S); //disable texture coordinate generation
+                    glDisable(GL_TEXTURE_GEN_T);
+	glPopMatrix();
+
 	draw_player();
     draw_obstacles();
     if(ghost1.respawn<=0)draw_ghost(&ghost1);
@@ -393,9 +546,25 @@ glPushMatrix();
     else {
         glColor3f(gh3);
     }
+    glBindTexture(GL_TEXTURE_2D, names[2]);
+    glEnable(GL_TEXTURE_2D);
+    GLUquadric* krug = gluNewQuadric();
+    gluQuadricTexture(krug, GL_TRUE);
     glTranslatef(ghost->x,ghost->y,2);
-	glutSolidSphere(ghost->size,10,10);
+    glScalef(1.0,1.0,1.5);
+	//glutSolidSphere(ghost->size,10,10);
+	gluSphere(krug, ghost->size, 10, 10);
+	glDisable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D,0);
 glPopMatrix();
+
+
+
+
+
+
+
+
 }
 
 static void moveRight(void){
@@ -434,9 +603,13 @@ static void draw_obstacles(void){
     int j=0;
     for(i=0;i<=14;i++){
         for(j=0;j<=18;j++){
-            if(map[i][j]==0)draw_block(i,j);
+            if(map[i][j]==0){
+
+                    draw_block(i,j);
+
+            }
             else if(map[i][j]==2)draw_coins(i,j);
-            else if(map[i][j]==3)draw_supercoins(i,j);
+            else if(map[i][j]==3)draw_supercoins(i,j,&param);
             else if(map[i][j]==4)draw_teleport(i,j);
         }
     }
@@ -704,4 +877,21 @@ static void panToTop(void){
     tarY+=(top2-player.y)/120;
     tarZ+=top3/120;
     brojac--;
+}
+
+static void draw_block(int i, int j){
+                glPushMatrix();
+                        glBindTexture(GL_TEXTURE_2D, names[1]);
+                        glEnable(GL_TEXTURE_2D);
+                        glEnable(GL_TEXTURE_GEN_S); //enable texture coordinate generation
+                        glEnable(GL_TEXTURE_GEN_T);
+                    glColor3f(wallcolor);
+                    glTranslatef(square*i+square/2,square*j+square/2,square/4);
+                    glScalef(square,square,square/2);
+                    glutSolidCube(1);
+
+                    glDisable(GL_TEXTURE_2D);
+                    glDisable(GL_TEXTURE_GEN_S); //disable texture coordinate generation
+                    glDisable(GL_TEXTURE_GEN_T);
+                glPopMatrix();
 }

@@ -13,8 +13,8 @@
 
 void draw_ground(void); //iscrtava zemlju
 void draw_coins(int i, int j); //iscrtava coine
-void draw_supercoins(int i, int j); //supercoin
-void draw_block(int i, int j);    //iscrtava prepreku
+void draw_supercoins(int i, int j,float *param); //supercoin
+//void draw_block(int i, int j);    //iscrtava prepreku
 void draw_teleport(int i, int j);   //iscrtava teleporter
 void drawBitmapText(char *string,float x,float y,float z); //ispisuje tekst
 void drawBigText(char *string,float x,float y,float z);
