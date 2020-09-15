@@ -192,7 +192,7 @@ static void after_collision(int x, int y, int typeOfCollision);
 //funkcija koja preduzima akciju nakon kolizije u zavisnosti od tipa kolizije
 
 static void immunity(int t); //funkcija koja pokazuje da pacman moze da jede duhove
-static void eat_a_coin(void);   //funkcija koja se poziva kada pojede novcic
+//static void eat_a_coin(void);   //funkcija koja se poziva kada pojede novcic
 
 float distance (float x1, float y1, float x2, float y2);    //funkcija razdaljine dve tacke
 
