@@ -16,7 +16,7 @@ image.o: image.c
 .PHONY: clean dist
 
 clean:
-	-rm *.o $(PROGRAM) *core
+	-rm *.o $(PROGRAM)
 
 dist: clean
 	-tar -chvj -C .. -f ../$(PROGRAM).tar.bz2 $(PROGRAM)
