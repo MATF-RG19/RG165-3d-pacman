@@ -27,5 +27,8 @@ Ako pojedete crveni novcic, on ce vam omoguciti da pojedete duhove u narednih pa
 <kbd>I</kbd> Pomeranje na gore.<br>
 <kbd>K</kbd> Pomeranje na dole.<br>
 
+# Gameplay
+![Gameplay](https://github.com/MATF-RG19/RG165-3d-pacman/blob/master/Screenshots/nedelja5.gif)
+
   
 
