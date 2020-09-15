@@ -2,7 +2,7 @@
 #include <GL/glut.h>
 
 
-
+/*
 void draw_ground(void){
 	//draw ground
 	glPushMatrix();
@@ -17,7 +17,7 @@ void draw_ground(void){
 
 
     //draw boundries
-/*
+
     //vertikalne
 
 	glPushMatrix();
@@ -52,9 +52,10 @@ void draw_ground(void){
 		glScalef(square,15*square,square/2);
 		glutSolidCube(1);
 	glPopMatrix();
-*/
+
 
 }
+*/
 
 void draw_coins(int i, int j){
                     glPushMatrix();

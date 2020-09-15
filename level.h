@@ -11,7 +11,7 @@
 #define square 4
 #define coincolor 1.0, 0.843, 0.0
 
-void draw_ground(void); //iscrtava zemlju
+//void draw_ground(void); //iscrtava zemlju
 void draw_coins(int i, int j); //iscrtava coine
 void draw_supercoins(int i, int j,float *param); //supercoin
 //void draw_block(int i, int j);    //iscrtava prepreku

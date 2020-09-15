@@ -70,10 +70,10 @@ int kopija[15][18]={
 
 };
 
-int brojac=0;
-int paused=0;
+int brojac=0;       //indikator animacije kamere
+int paused=0;       //indikator pauze
 int pausable=60;    //ne moze se pauzirati prvu sekundu
-static void pause(void);
+static void pause(void);    //funkcija pauziranja
 
 /* Funkcija initalize() vrsi OpenGL inicijalizaciju. */
 static void initialize(void);
@@ -85,8 +85,8 @@ static void on_reshape(int width, int height);
 static void on_display(void);
 static void timer(int time);
 
-static void panToPlayer(void);
-static void panToTop(void);
+static void panToPlayer(void);  //funkcija kamere iz pocetne do igraca
+static void panToTop(void);     //funkcija kretanja kamere od igraca do pocetne
 
 //Draw funkcije
 static void draw_level(void);	//pocetno iscrtavanje nivoa
@@ -122,7 +122,7 @@ int moving;       //indikator kretanja
 int dir;            //smer u kome se duh krece
 }Ghost;
 
-Ghost ghost1,ghost2,ghost3;
+Ghost ghost1,ghost2,ghost3;     //globalne promenjlive duhova 1,2,3
 
 static void move(Ghost *ghost);//funkcija kretanja duha
 static void draw_ghost(Ghost *ghost);   //iscrtavanje duha
@@ -234,25 +234,25 @@ int main(int argc, char **argv)
 
 static void on_display(void)
 {
-      /*boja pozadine*/
+      //boja pozadine
     glClearColor(0.5, 0.5,0.5,0);
 
-    /* Pozicija svetla. */
+    // Pozicija svetla.
     GLfloat light_position[] = {1, 1, 1, 0};
 
-    /* Ambijentalna boja svetla. */
+    // Ambijentalna boja svetla.
     GLfloat light_ambient[] = { 0.2, 0.2, 0.2, 1 };
 
-    /* Difuzna boja svetla. */
+    // Difuzna boja svetla.
     GLfloat light_diffuse[] = { 1, 1, 1, 1 };
 
-    /* Spekularna boja svetla. */
+    // Spekularna boja svetla.
     GLfloat light_specular[] = {  1, 1, 1, 1 };
 
-    /* Koeficijenti spekularne refleksije materijala. */
+    // Koeficijenti spekularne refleksije materijala.
     GLfloat specular_coeffs[] = { 1, 1, 1, 1 };
 
-    /* Koeficijent glatkosti materijala. */
+    // Koeficijent glatkosti materijala.
     GLfloat shininess = 15;
 
 
@@ -267,6 +267,8 @@ static void on_display(void)
 	sprintf(numLives,"Lives: %d",player.lives);
     drawBitmapText(remains,17*square,1*square+1,0);
     drawBitmapText(numLives,17*square,1*square-1,0);
+
+    //ispisivanje teksta na ekran u zavisnosti od pobede/poraza i pauze
 
     if(paused==1 && won!=1){
     if(lost!=1){
@@ -292,7 +294,7 @@ static void on_display(void)
     }
 
 
-        /* Ukljucuje se osvjetljenje i podesavaju parametri svetla. */
+        // Ukljucuje se osvjetljenje i podesavaju parametri svetla.
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
 
@@ -301,7 +303,7 @@ static void on_display(void)
     glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
     glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
 
-    /* Podesavaju se parametri materijala. */
+    // Podesavaju se parametri materijala.
     glEnable ( GL_COLOR_MATERIAL ) ;
     glColorMaterial ( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE );
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular_coeffs);
@@ -326,20 +328,20 @@ static void initialize(void){
 	glClearColor(0.0,0.0,0,1.0);
 	glEnable(GL_DEPTH_TEST);
 
-	/* Deklaracija teskture učitane iz fajla. */
+	// Deklaracija teskture učitane iz fajla.
     Image * image;
 
-    /* Uključuju se teksture. */
+    // Uključuju se teksture.
     glEnable(GL_TEXTURE_2D);
     glTexEnvf(GL_TEXTURE_ENV,
               GL_TEXTURE_ENV_MODE,
               GL_REPLACE);
 
-    /* Inicijalizuje se promenljiva image koji ce sadrzati teksture ucitane iz fajlova. */
+    // Inicijalizuje se promenljiva image koji ce sadrzati teksture ucitane iz fajlova.
     image = image_init(0, 0);
 
-    /* Kreira se prva tekstura. */
-    /* Generisu se identifikatori tekstura. */
+    // Kreira se prva tekstura.
+    // Generisu se identifikatori tekstura.
     glGenTextures(2, names);
 
     image_read(image, FILENAME0);
@@ -384,10 +386,10 @@ static void initialize(void){
 
 
 
-    /* Iskljucujemo aktivnu teksturu */
+    // Iskljucujemo aktivnu teksturu
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    /* Unistava se objekat za citanje tekstura iz fajla. */
+    // Unistava se objekat za citanje tekstura iz fajla.
     image_done(image);
 }
 
@@ -421,11 +423,12 @@ static void timer(int time){
     if (keystates['x'] || keystates['X']) player.immune=5.0;
     if (keystates['p'] || keystates['P']) {pause(); if(won==1 || lost==1)new_game();}
 
-    //camera controls
+    //conditions
+    /*
     if (keystates['w'] || keystates['W']) win();
     if (keystates['a'] || keystates['A']) game_over();
     if (keystates['c'] || keystates['C']) player.remaining=1;
-
+    */
 
     if(keystates['m'])printf("\n%f %f %f, %f %f %f\n",positionX,positionY,positionZ,tarX,tarY,tarZ);
     if(paused==0){
@@ -663,7 +666,7 @@ static void after_collision(int x, int y, int typeOfCollision){
         case 2:
             map[x][y]=1;
             player.remaining--;
-            eat_a_coin();
+            //eat_a_coin();
             if(player.remaining==0)win();
             break;
 
@@ -681,11 +684,7 @@ static void after_collision(int x, int y, int typeOfCollision){
 
 static void immunity(int t){
     player.eat=t;
-    //animacija
-}
 
-static void eat_a_coin(void){
-    //animacija
 }
 
 static void game_over(void){
