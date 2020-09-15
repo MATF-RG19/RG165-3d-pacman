@@ -1,4 +1,8 @@
 /*
+Header za ucitavanje tekstura preuzet sa materijala vezbi (cas 7).
+*/
+
+/*
  * Dve strukture koje opisuju strukturu dva zaglavlja
  * kojima pocinje svaka slika u bmp formatu.
  */
