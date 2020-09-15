@@ -17,7 +17,7 @@ Ako pojedete crveni novcic, on ce vam omoguciti da pojedete duhove u narednih pa
 # Komande
 
 <br>
-<kbd>R</kbd> Start/Pause<br>
+<kbd>P</kbd> Start/Pause<br>
 <kbd>N</kbd> Restartovanje igre.<br>
 <kbd>ESC</kbd> Izlaz iz igrice.
 
