@@ -16,12 +16,12 @@ Ako pojedete crveni novcic, on ce vam omoguciti da pojedete duhove u narednih pa
 
 # Komande
 
-Pacmanom se upravlja tasterima:
+<br>
 <kbd>R</kbd> Start/Pause<br>
-<kbd>N</kbd> / <kbd>r</kbd> Restartovanje igre.<br>
+<kbd>N</kbd> Restartovanje igre.<br>
 <kbd>ESC</kbd> Izlaz iz igrice.
 
-Pacmanom se upravlja tasterima:
+<br>Pacmanom se upravlja tasterima:<br>
 <kbd>J</kbd> Pomeranje u levo.<br>
 <kbd>L</kbd> Pomeranje u desno.<br>
 <kbd>I</kbd> Pomeranje na gore.<br>
